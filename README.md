@@ -1,29 +1,11 @@
-# Grad-PU
-
- [arXiv](https://arxiv.org/abs/2304.11846) | [Project Page](https://yunhe20.github.io/Grad-PU) | [Code](https://github.com/yunhe20/Grad-PU)
-
-This is the official PyTorch implementation of our paper "Grad-PU: Arbitrary-Scale Point Cloud Upsampling via Gradient Descent with Learned Distance Functions" (CVPR 2023).
-
-<img src="./p2pnet.png">
-
-## Abstract
-
-Most existing point cloud upsampling methods have roughly three steps: feature extraction, feature expansion and 3D coordinate prediction. However, they usually suffer from two critical issues: (1) fixed upsampling rate after one-time training, since the feature expansion unit is customized for each upsampling rate; (2) outliers or shrinkage artifact caused by the difficulty of precisely predicting 3D coordinates or residuals of upsampled points. To adress them, we propose a new framework for accurate point cloud upsampling that supports arbitrary upsampling rates. Our method first interpolates the low-res point cloud according to a given upsampling rate. And then refine the positions of the interpolated points with an iterative optimization process, guided by a trained model estimating the difference between the current point cloud and the high-res target. Extensive quantitative and qualitative results on benchmarks and downstream tasks demonstrate that our method achieves the state-of-the-art accuracy and efficiency.
+# Grad-PU and PUGAN
 
 ## Installation
 
 * Install the following packages
 
 ```
-python==3.7.11
-torch==1.7.1
-CUDA==11.0
-numpy==1.21.2
-open3d==0.9.0.0
-einops==0.3.2
-scikit-learn==1.0.1
-tqdm==4.62.3
-h5py==3.6.0
+pip install open3d einops scikit-learn tqdm h5py torch
 ```
 
 * Install the built-in libraries
