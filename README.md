@@ -5,15 +5,14 @@
 * Install the following packages
 
 ```
-pip install open3d einops scikit-learn tqdm h5py torch ninja
+pip install open3d einops scikit-learn tqdm h5py ninja
+git submodule add https://github.com/ThibaultGROUEIX/ChamferDistancePytorch
 ```
 
 * Install the built-in libraries
 
 ```
-cd models/Chamfer3D
-python setup.py install
-cd ../pointops
+cd models/pointops
 python setup.py install
 ```
 
