@@ -5,7 +5,7 @@
 * Install the following packages
 
 ```
-pip install open3d einops scikit-learn tqdm h5py torch
+pip install open3d einops scikit-learn tqdm h5py torch ninja
 ```
 
 * Install the built-in libraries
