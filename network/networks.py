@@ -3,46 +3,17 @@ sys.path.append("../")
 import torch
 import torch.nn as nn
 from torch.nn import Conv1d,Conv2d
-from knn_cuda import KNN
-from pointnet2.pointnet2_utils import gather_operation,grouping_operation
+from models.utils import get_knn_pts, index_points
 import torch.nn.functional as F
 from torch.autograd import Variable
-
-class get_edge_feature(nn.Module):
-    """construct edge feature for each point
-    Args:
-        tensor: input a point cloud tensor,batch_size,num_dims,num_points
-        k: int
-    Returns:
-        edge features: (batch_size,num_dims,num_points,k)
-    """
-    def __init__(self,k=16):
-        super(get_edge_feature,self).__init__()
-        self.KNN=KNN(k=k+1,transpose_mode=False)
-        self.k=k
-    def forward(self,point_cloud):
-        dist,idx=self.KNN(point_cloud,point_cloud)
-        '''
-        idx is batch_size,k,n_points
-        point_cloud is batch_size,n_dims,n_points
-        point_cloud_neightbors is batch_size,n_dims,k,n_points
-        '''
-        idx=idx[:,1:,:]
-        point_cloud_neighbors=grouping_operation(point_cloud,idx.contiguous().int())
-        point_cloud_central=point_cloud.unsqueeze(2).repeat(1,1,self.k,1)
-        #print(point_cloud_central.shape,point_cloud_neighbors.shape)
-        edge_feature=torch.cat([point_cloud_central,point_cloud_neighbors-point_cloud_central],dim=1)
-
-        return edge_feature,idx
+from models.utils import chamfer_dist
 
 
-
-        return dist,idx
 
 class denseconv(nn.Module):
     def __init__(self,growth_rate=64,k=16,in_channels=6,isTrain=True):
         super(denseconv,self).__init__()
-        self.edge_feature_model=get_edge_feature(k=k)
+        self.k = k
         '''
         input to conv1 is batch_size,2xn_dims,k,n_points
         '''
@@ -62,6 +33,7 @@ class denseconv(nn.Module):
         y should be batch_size,in_channel,k,n_points
         '''
         y,idx=self.edge_feature_model(input)
+        y, idx = get_knn_pts(self.k, input, input, return_idx=True)
         inter_result=torch.cat([self.conv1(y),y],dim=1) #concat on feature dimension
         inter_result=torch.cat([self.conv2(inter_result),inter_result],dim=1)
         inter_result=torch.cat([self.conv3(inter_result),inter_result],dim=1)
