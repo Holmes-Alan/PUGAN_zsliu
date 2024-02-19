@@ -1,8 +1,8 @@
 #include <torch/serialize/tensor.h>
 #include <vector>
-#include <THC/THC.h>
+// #include <THC/THC.h>
 #include <ATen/cuda/CUDAContext.h>
-
+#include <ATen/cuda/CUDAEvent.h>
 #include "knnquery_heap_cuda_kernel.h"
 
 extern THCState *state;
