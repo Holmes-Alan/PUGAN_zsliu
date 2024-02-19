@@ -6,7 +6,6 @@ from torch.nn import Conv1d,Conv2d
 from models.utils import get_knn_pts, index_points
 import torch.nn.functional as F
 from torch.autograd import Variable
-from models.utils import chamfer_dist
 
 
 
