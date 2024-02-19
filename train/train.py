@@ -11,7 +11,7 @@ args = parser.parse_args()
 os.environ["CUDA_VISIBLE_DEVICES"]=args.gpu
 sys.path.append('../')
 import torch
-from network.networks import Generator,Discriminator
+from networks import Generator,Discriminator
 from data.data_loader import PUNET_Dataset
 import time
 from option.train_option import get_train_options
@@ -22,6 +22,8 @@ from torch.optim.lr_scheduler import MultiStepLR
 from loss.loss import Loss
 import datetime
 import torch.nn as nn
+import ChamferDistancePytorch.chamfer3D.dist_chamfer_3D, ChamferDistancePytorch.fscore
+chamLoss = ChamferDistancePytorch.chamfer3D.dist_chamfer_3D.chamfer_3DDist()
 
 def xavier_init(m):
     classname = m.__class__.__name__
@@ -74,7 +76,7 @@ def train(args):
 
     D_scheduler = MultiStepLR(optimizer_D,[50,80],gamma=0.2)
     G_scheduler = MultiStepLR(optimizer_G,[50,80],gamma=0.2)
-
+    
     Loss_fn=Loss()
 
     print("preparation time is %fs" % (time.time() - start_t))
@@ -92,10 +94,10 @@ def train(args):
             start_t_batch=time.time()
             output_point_cloud=G_model(input_data)
 
-            repulsion_loss = Loss_fn.get_repulsion_loss(output_point_cloud.permute(0, 2, 1))
-            uniform_loss = Loss_fn.get_uniform_loss(output_point_cloud.permute(0, 2, 1))
             #print(output_point_cloud.shape,gt_data.shape)
-            emd_loss = Loss_fn.get_emd_loss(output_point_cloud.permute(0, 2, 1), gt_data.permute(0, 2, 1))
+            dist1, dist2, idx1, idx2 = chamLoss(output_point_cloud.permute(0, 2, 1), gt_data)
+            emd_loss = (dist1 + dist2) / 2.
+            emd_loss = emd_loss.mean()
 
             if params['use_gan']==True:
                 fake_pred = D_model(output_point_cloud.detach())
@@ -114,13 +116,11 @@ def train(args):
                 g_loss=Loss_fn.get_generator_loss(fake_pred)
 
                 #print(repulsion_loss,uniform_loss,emd_loss)
-                total_G_loss=params['uniform_w']*uniform_loss+params['emd_w']*emd_loss+ \
-                repulsion_loss*params['repulsion_w']+ g_loss*params['gan_w']
+                total_G_loss=params['emd_w']*emd_loss+ g_loss*params['gan_w']
             else:
                 #total_G_loss = params['uniform_w'] * uniform_loss + params['emd_w'] * emd_loss + \
                 #               repulsion_loss * params['repulsion_w']
-                total_G_loss=params['emd_w'] * emd_loss + \
-                               repulsion_loss * params['repulsion_w']
+                total_G_loss=params['emd_w'] * emd_loss
 
             #total_G_loss=emd_loss
             total_G_loss.backward()
@@ -129,8 +129,6 @@ def train(args):
             current_lr_D=optimizer_D.state_dict()['param_groups'][0]['lr']
             current_lr_G=optimizer_G.state_dict()['param_groups'][0]['lr']
 
-            tb_logger.scalar_summary('repulsion_loss', repulsion_loss.item(), iter)
-            tb_logger.scalar_summary('uniform_loss', uniform_loss.item(), iter)
             tb_logger.scalar_summary('emd_loss', emd_loss.item(), iter)
             if params['use_gan']==True:
                 tb_logger.scalar_summary('d_loss', d_loss.item(), iter)
@@ -172,5 +170,4 @@ def train(args):
 
 
 if __name__=="__main__":
-    import colored_traceback
     train(args)
