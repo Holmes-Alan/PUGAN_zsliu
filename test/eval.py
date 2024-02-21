@@ -72,11 +72,11 @@ if __name__ == '__main__':
             preds = model(points)  # points.shape[1])
             preds=preds.permute(0,2,1).contiguous()
 
-            emd = get_emd_loss(preds, gt, radius)
-            cd = get_cd_loss(preds, gt, radius)
-            print(' -- iter {}, emd {}, cd {}.'.format(itr, emd, cd))
-            emd_list.append(emd.item())
-            cd_list.append(cd.item())
+            preds = preds.data.cpu().numpy()[0]
+            points = points.permute(0,2,1).data.cpu().numpy()
+            save_file='../outputs/{}/{}.xyz'.format(exp_name,name)
+            #print(preds.shape)
+            save_xyz_file(preds,save_file)
 
     print('mean emd: {}'.format(np.mean(emd_list)))
     print('mean cd: {}'.format(np.mean(cd_list)))
